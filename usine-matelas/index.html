@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Entretien usine de matelas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Fiche d'entretien sur une colonne ; barre d'état collante en haut (compteur, enregistrement, export). */
+:root {
+  --bg: #f6f7f5; --paper: #ffffff; --fg: #1d232b; --muted: #5b6470; --line: #d5dae0;
+  --ink: #2f4a8a; --ink-fg: #ffffff; --foam: #f3dc78; --foam-fg: #3d3203; --soft: #eceff3;
+  --ok: #2e6b3f; --warn: #8a3b12;
+  --f-display: "Archivo", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Source Sans 3", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --f-code: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #13171c; --paper: #1a1f26; --fg: #e5e8eb; --muted: #9aa3ad; --line: #313842;
+    --ink: #93abe8; --ink-fg: #10141a; --foam: #5a4c12; --foam-fg: #f7e9ab; --soft: #222831;
+    --ok: #7fc493; --warn: #f0a77d; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 17px/1.55 var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 72px;
+}
+.page { max-width: 780px; margin: 0 auto; display: grid; gap: 36px; padding-top: 28px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Barre d'état */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--paper); box-shadow: 0 1px 0 var(--line), 0 4px 14px rgba(0,0,0,.05);
+}
+.bar-in { max-width: 780px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.count { font-weight: 600; font-variant-numeric: tabular-nums; }
+.gauge { flex: 1 1 120px; max-width: 220px; height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.gauge span { display: block; height: 100%; width: 0; background: var(--ink); transition: width .2s; }
+.saved { font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.saved.err { color: var(--warn); font-weight: 600; }
+.bar .btn { padding: 6px 12px; font-size: 15px; }
+
+/* En-tête */
+.eyebrow { font: 600 13px/1.3 var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(32px, 6vw, 50px); font-weight: 800; font-stretch: 78%; line-height: 1.03; letter-spacing: -.01em; }
+.head { display: grid; gap: 14px; }
+.lede { max-width: 62ch; }
+.legend { color: var(--muted); font-size: 15px; }
+.badge {
+  display: inline-block; font: 700 11px/1 var(--f-display); letter-spacing: .07em; text-transform: uppercase;
+  background: var(--foam); color: var(--foam-fg); padding: 5px 7px 4px; border-radius: 3px; vertical-align: 2px; white-space: nowrap;
+}
+
+/* Formulaires */
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 14px; }
+.card h2 { font-size: 22px; font-weight: 700; font-stretch: 85%; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 16px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label, .lbl { font-size: 14px; font-weight: 600; color: var(--muted); }
+input[type="text"], input[type="date"], input[type="number"], textarea {
+  width: 100%; font: inherit; color: var(--fg); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 5px; padding: 8px 10px;
+}
+textarea { min-height: 76px; resize: vertical; line-height: 1.45; }
+input:focus, textarea:focus { outline: 2px solid var(--ink); outline-offset: 0; border-color: transparent; }
+textarea:disabled { opacity: .45; }
+
+.btn {
+  font: 600 16px var(--f-body); border-radius: 5px; padding: 9px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--paper); color: var(--fg);
+}
+.btn:hover { background: var(--soft); }
+.btn.primary { background: var(--ink); color: var(--ink-fg); border-color: var(--ink); }
+.btn.primary:hover { filter: brightness(1.08); background: var(--ink); }
+.btn.danger { color: var(--warn); }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* Sommaire et filtre */
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 20px; }
+.toc a { text-decoration: none; color: var(--fg); display: grid; grid-template-columns: 1.6em 1fr auto; gap: 8px; align-items: baseline; }
+.toc a:hover .t { text-decoration: underline; }
+.toc .k { font: 500 13px var(--f-code); color: var(--ink); }
+.toc .n { font: 500 12px var(--f-code); color: var(--muted); font-variant-numeric: tabular-nums; }
+.filter { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 15px; }
+.filter label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+
+/* Points essentiels */
+.essentials ol { margin: 0; padding: 0; list-style: none; counter-reset: e; display: grid; gap: 8px; }
+.essentials li { counter-increment: e; display: grid; grid-template-columns: 2em 1fr; gap: 8px; align-items: baseline; }
+.essentials li::before { content: counter(e); font: 800 20px/1 var(--f-display); font-stretch: 75%; color: var(--ink); }
+.ref { font: 500 13px var(--f-code); color: var(--muted); white-space: nowrap; }
+ul.plain { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px 28px; }
+.cols > div { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.cols h3 { font-size: 16px; font-weight: 700; }
+
+/* Sections */
+.section { display: grid; gap: 18px; scroll-margin-top: 70px; }
+.section-title { display: flex; gap: 16px; align-items: baseline; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.letter { font: 800 44px/.9 var(--f-display); font-stretch: 62%; color: var(--ink); min-width: .7em; }
+.section-title h2 { font-size: 26px; font-weight: 700; font-stretch: 85%; flex: 1; }
+.section-title .n { font: 500 13px var(--f-code); color: var(--muted); white-space: nowrap; }
+.intro { color: var(--muted); max-width: 62ch; }
+.q { display: grid; grid-template-columns: 3.2em 1fr; gap: 6px 10px; align-items: start; }
+.q[hidden] { display: none; }
+.q .code { font: 500 14px/1.7 var(--f-code); color: var(--ink); }
+.q .body { min-width: 0; display: grid; gap: 6px; }
+.q .text { max-width: 64ch; }
+.q .hint { color: var(--muted); font-size: 15px; }
+.q .na { font-size: 14px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; cursor: pointer; justify-self: start; }
+.q.done .code::after { content: " ✓"; color: var(--ok); }
+.annex { background: var(--soft); border-radius: 8px; padding: 22px 20px; }
+
+/* Bloc */
+.block { display: grid; grid-template-columns: minmax(0, 200px) 1fr; gap: 20px; align-items: center; }
+.block > div { min-width: 0; }
+.dims input { min-width: 0; }
+.block svg { width: 100%; height: auto; display: block; }
+.block svg .f1 { fill: var(--foam); } .block svg .f2 { fill: var(--foam); opacity: .75; } .block svg .f3 { fill: var(--foam); opacity: .55; }
+.block svg .e { fill: none; stroke: var(--foam-fg); stroke-width: 1.2; }
+.block svg text { fill: var(--fg); font: 600 12px var(--f-code); }
+.dims { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 8px 10px; align-items: center; }
+.dims .h { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.dims input { font-family: var(--f-code); font-size: 15px; padding: 6px 8px; }
+.vol { font-size: 15px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.vol strong { color: var(--fg); }
+
+/* Export */
+.out { font: 14px/1.5 var(--f-code); min-height: 200px; background: var(--bg); }
+.msg { font-size: 15px; color: var(--ok); min-height: 1.4em; }
+.msg.err { color: var(--warn); }
+.foot { color: var(--muted); font-size: 14px; display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
+.warnbox { background: var(--foam); color: var(--foam-fg); border-radius: 6px; padding: 12px 14px; font-size: 15px; }
+
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .q { grid-template-columns: 1fr; gap: 4px; }
+  .block { grid-template-columns: 1fr; }
+  .block svg { max-width: 200px; }
+  .gauge { display: none; }
+}
+@media print {
+  .bar, .toc, .noprint { display: none !important; }
+  body { background: #fff; color: #000; font-size: 11pt; padding: 0; }
+  .card, .annex { border: 0; padding: 0; background: #fff; }
+  textarea, input { border: 0; border-bottom: 1px solid #999; border-radius: 0; background: #fff; color: #000; }
+  .q { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar noprint">
+  <div class="bar-in">
+    <div class="row" style="gap:12px">
+      <span class="count" id="compte">0 réponse sur 0</span>
+      <span class="gauge" aria-hidden="true"><span id="jauge"></span></span>
+    </div>
+    <div class="row" style="gap:12px">
+      <span class="saved" id="etat" role="status" aria-live="polite">Rien de saisi</span>
+      <a class="btn primary" href="#export" style="text-decoration:none">Exporter</a>
+    </div>
+  </div>
+</div>
+
+<main class="page">
+
+  <header class="head">
+    <p class="eyebrow">Projet Odoo · Usine de matelas en mousse</p>
+    <h1>Questionnaire de cadrage</h1>
+    <p class="lede">Ce questionnaire sert à décrire le fonctionnement de l'usine, du moussage à la facturation, avant de paramétrer Odoo. Les réponses se saisissent directement dans les champs et s'enregistrent automatiquement sur cet appareil. On peut fermer la page et reprendre plus tard.</p>
+    <p class="legend"><span class="badge">Essentiel</span> question à traiter en priorité si le temps manque. Les codes (A1, B2...) servent à retrouver chaque réponse dans le compte rendu.</p>
+  </header>
+
+  <div class="warnbox" id="sansstockage" hidden>Ce navigateur refuse l'enregistrement (navigation privée ou stockage bloqué). Les réponses seront perdues à la fermeture de la page : exportez avant de quitter.</div>
+
+  <section class="card" aria-labelledby="t-ident">
+    <h2 id="t-ident">L'entretien</h2>
+    <div class="fields">
+      <div class="field"><label for="entreprise">Entreprise</label><input type="text" id="entreprise" autocomplete="organization"></div>
+      <div class="field"><label for="date">Date</label><input type="date" id="date"></div>
+      <div class="field"><label for="participants">Participants</label><input type="text" id="participants" placeholder="Noms et fonctions"></div>
+      <div class="field"><label for="enqueteur">Mené par</label><input type="text" id="enqueteur"></div>
+    </div>
+  </section>
+
+  <nav class="card toc noprint" aria-labelledby="t-toc">
+    <h2 id="t-toc">Sommaire</h2>
+    <ol id="sommaire"></ol>
+    <div class="filter" role="radiogroup" aria-label="Afficher">
+      <span class="lbl">Afficher :</span>
+      <label><input type="radio" name="filtre" value="toutes" id="f-toutes" checked> toutes les questions</label>
+      <label><input type="radio" name="filtre" value="essentielles" id="f-ess"> les essentielles</label>
+      <label><input type="radio" name="filtre" value="ouvertes" id="f-ouv"> celles sans réponse</label>
+    </div>
+  </nav>
+
+  <section class="cols" aria-label="Préparation">
+    <div>
+      <h3>Personnes à associer</h3>
+      <ul class="plain">
+        <li>la direction ;</li>
+        <li>le responsable du moussage ;</li>
+        <li>le responsable de la coupe ;</li>
+        <li>le magasinier ;</li>
+        <li>un commercial.</li>
+      </ul>
+      <p class="intro">Les questions de l'annexe K sont pour le comptable.</p>
+    </div>
+    <div>
+      <h3>Documents utiles</h3>
+      <ul class="plain">
+        <li>la fiche société : raison sociale, NIF, STAT, RCS, adresse, logo ;</li>
+        <li>le tarif de vente en vigueur ;</li>
+        <li>la liste des clients et des fournisseurs, même incomplète ;</li>
+        <li>un exemplaire de chaque document de vente émis ;</li>
+        <li>les formulations de moussage par densité ;</li>
+        <li>un état du stock actuel, même approximatif.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="card essentials" aria-labelledby="t-ess">
+    <h2 id="t-ess">Les huit points essentiels</h2>
+    <ol>
+      <li><span>Les dimensions réelles du bloc, brut et net. <span class="ref">C3, C4</span></span></li>
+      <li><span>Les gammes, formats et épaisseurs réellement vendus. <span class="ref">F1, F2</span></span></li>
+      <li><span>La fabrication sous la marque de clients, et ce qui la distingue de la marque propre. <span class="ref">F3, F4</span></span></li>
+      <li><span>Le devenir des croûtes, des chutes et du reste d'un bloc. <span class="ref">C7, D6, D8</span></span></li>
+      <li><span>Vendre en rupture de stock : bloquer, ou fabriquer à la commande. <span class="ref">F8</span></span></li>
+      <li><span>Les différents types de documents de vente et la TVA. <span class="ref">F10</span></span></li>
+      <li><span>Les utilisateurs d'Odoo et leurs rôles. <span class="ref">A4</span></span></li>
+      <li><span>La date de démarrage souhaitée. <span class="ref">A6</span></span></li>
+    </ol>
+  </section>
+
+  <div id="questionnaire" style="display:grid;gap:40px"></div>
+
+  <section class="card noprint" id="export" aria-labelledby="t-export">
+    <h2 id="t-export">Exporter et sauvegarder</h2>
+    <p class="intro">Le compte rendu se relit et s'envoie pour validation. Le fichier de sauvegarde permet de reprendre l'entretien sur un autre appareil : exportez-le à la fin de chaque séance.</p>
+    <div class="row">
+      <button type="button" class="btn primary" id="b-md">Télécharger le compte rendu</button>
+      <button type="button" class="btn" id="b-copier">Copier le texte</button>
+      <button type="button" class="btn" id="b-partager" hidden>Partager</button>
+      <button type="button" class="btn" id="b-imprimer">Imprimer</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn" id="b-json">Télécharger la sauvegarde</button>
+      <label class="btn" for="f-import" style="display:inline-block">Reprendre une sauvegarde</label>
+      <input type="file" id="f-import" accept=".json,application/json" hidden>
+      <button type="button" class="btn danger" id="b-effacer">Nouvel entretien</button>
+    </div>
+    <p class="msg" id="message" role="status" aria-live="polite"></p>
+    <p class="saved" id="dernier-export">Aucun export depuis cet appareil.</p>
+    <label class="lbl" for="apercu">Aperçu du compte rendu</label>
+    <textarea class="out" id="apercu" readonly></textarea>
+  </section>
+
+  <footer class="foot">
+    <p>Les réponses restent sur cet appareil : elles ne sont envoyées nulle part tant que vous ne les exportez pas.</p>
+    <p>Questionnaire de cadrage Odoo Community pour une usine de matelas en mousse · version 1 du 18 novembre 2026.</p>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var VERSION = 1;
+  var CLE = "entretien-usine-matelas-v1";
+  var FORMAT = "entretien-usine-matelas";
+
+  /* Les questions. Chaque entrée : [code, texte, essentiel, précision]. */
+  var SECTIONS = [
+    { k: "A", id: "societe", t: "Société et organisation", q: [
+      ["A1", "Combien de sites : usine, dépôts, points de vente ? Le stock est-il réparti entre plusieurs lieux ?"],
+      ["A2", "Combien de personnes travaillent à l'usine, et dans chaque atelier (moussage, coupe, confection, magasin, livraison) ?"],
+      ["A3", "Horaires de l'usine : jours et heures de travail, travail en équipes ?"],
+      ["A4", "Qui utilisera Odoo, et pour quoi faire ? Pour chaque personne : nom, fonction, ce qu'elle doit pouvoir saisir, voir ou valider.", 1, "Qui doit voir les prix d'achat et les marges ?"],
+      ["A5", "Qui valide quoi aujourd'hui : achats, remises, sorties de stock, avoirs ?"],
+      ["A6", "À quelle date souhaitez-vous travailler pour de vrai dans Odoo ? Y a-t-il une contrainte : début de mois, d'exercice, inventaire annuel ?", 1],
+      ["A7", "Quels outils utilisez-vous aujourd'hui (cahiers, Excel, autre logiciel) ? Lesquels doivent disparaître avec Odoo ?"]
+    ]},
+    { k: "B", id: "achats", t: "Achats et matières premières", q: [
+      ["B1", "Quelles matières achetez-vous : polyol, TDI, additifs, colorants, tissus, fils, emballages, étiquettes ? Dans quelle unité (kg, fût, rouleau, mètre) ?"],
+      ["B2", "Quelles matières sont importées ? De quels pays, en quelles devises ? Qui est votre transitaire ?"],
+      ["B3", "Frais d'approche à l'import (fret, assurance, douane, transit) : voulez-vous qu'ils entrent dans le coût des matières ?"],
+      ["B4", "Délais d'approvisionnement habituels, en local et à l'import."],
+      ["B5", "Pour quelles matières voulez-vous un seuil d'alerte (stock mini) ou un stock maxi ? Qui doit être prévenu ?"],
+      ["B6", "Comment décidez-vous aujourd'hui de passer une commande d'achat ? Une prévision des achats à partir des ventes vous serait-elle utile ?"],
+      ["B7", "Les matières chimiques ont-elles une date de péremption ou un numéro de lot fournisseur à suivre ?"]
+    ]},
+    { k: "C", id: "moussage", t: "Moussage et blocs", bloc: true, q: [
+      ["C1", "Quelles densités fabriquez-vous (par exemple 30 kg/m³ en standard, 50 kg/m³ en haute densité) ? Des couleurs, des mousses spéciales ?"],
+      ["C2", "Pour chaque densité : la formulation d'un bloc (quantité de chaque matière) et la fréquence de moussage."],
+      ["C3", "Dimensions du bloc brut, à la sortie du moussage : longueur, largeur, hauteur. Notez-les aussi dans le tableau ci-dessus.", 1],
+      ["C4", "Dimensions du bloc net, après écroûtage. Toutes les densités ont-elles le même bloc ? Fabriquez-vous plusieurs formats de bloc ?", 1],
+      ["C5", "La hauteur varie-t-elle d'un bloc à l'autre ? Qui mesure le bloc, à quel moment, et où est-ce noté ?"],
+      ["C6", "Les blocs portent-ils un numéro ou une date ? Seriez-vous prêts à numéroter chaque bloc, au feutre ou par étiquette ?", 0, "C'est ce qui permet de suivre le rendement de chaque bloc."],
+      ["C7", "L'écroûtage : que deviennent les croûtes ? Jetées, broyées en flocons, vendues ? Les dômes, sous-dômes et semelles en viennent-ils ?", 1],
+      ["C8", "Combien de temps un bloc doit-il reposer (maturation) avant d'être coupé ?"],
+      ["C9", "Les blocs ratés au moussage : que deviennent-ils, et à quelle fréquence ?"]
+    ]},
+    { k: "D", id: "coupe", t: "Coupe", q: [
+      ["D1", "Quelles machines de coupe avez-vous (horizontale, verticale, rotative) ? Combien de postes ?"],
+      ["D2", "Quels formats coupez-vous : 2 places (190 × 140), 1 place (190 × 90), 1 place large (190 × 120), King Size (200 × 180), d'autres ?"],
+      ["D3", "Coupez-vous des épaisseurs différentes dans un même bloc ? Des 1 place et des 2 places dans un même bloc ?"],
+      ["D4", "Qui décide de ce qu'on coupe dans un bloc, et à partir de quoi : commandes clients, stock à reconstituer, habitude ?"],
+      ["D5", "Le trait de coupe (épaisseur perdue par la lame à chaque passage) : négligeable, ou à compter ? Combien de millimètres environ ?"],
+      ["D6", "Quand il reste une épaisseur en haut du bloc : la coupez-vous en feuilles, la gardez-vous pour plus tard, la jetez-vous ? À partir de quelle épaisseur le reste est-il perdu ?", 1],
+      ["D7", "Les pièces tirées de ce reste : sous quelle marque ou quelle référence sortent-elles ?"],
+      ["D8", "Les chutes : jetées, broyées en flocons, vendues au poids ? Quelle quantité par semaine ?", 1],
+      ["D9", "Les pièces ratées à la coupe : fréquence, et que deviennent-elles ?"],
+      ["D10", "Comment savez-vous aujourd'hui si un bloc a bien rendu ? Quel rendement attendez-vous ?"]
+    ]},
+    { k: "E", id: "confection", t: "Confection et finition", q: [
+      ["E1", "Un matelas est-il vendu nu (mousse seule), avec une housse, ou les deux ?"],
+      ["E2", "Pour un matelas avec housse : quels composants (tissu, fermeture, fil, étiquette, plastique) et quelles étapes (couture, piquage, emballage) ?"],
+      ["E3", "La housse est-elle fabriquée sur place ou achetée ?"],
+      ["E4", "Les étiquettes et emballages changent-ils selon la marque ?"],
+      ["E5", "Fabriquez-vous des coussins ou d'autres articles confectionnés ? Comment ?"],
+      ["E6", "Faut-il suivre le temps de travail par atelier pour calculer le coût de revient, ou le coût matière suffit-il dans un premier temps ?"]
+    ]},
+    { k: "F", id: "ventes", t: "Catalogue, ventes et facturation", q: [
+      ["F1", "Quelles gammes vendez-vous ? Pour chacune : densité, usage (matelas, feuille, coussin, accessoire), marque.", 1],
+      ["F2", "Quelles épaisseurs vendez-vous dans chaque gamme (par exemple matelas de 10 à 22 cm, feuilles de 0,5 à 9 cm) ? Certaines ne se vendent-elles jamais ?", 1],
+      ["F3", "Fabriquez-vous sous la marque de certains clients ? Ces produits leur sont-ils réservés ? D'autres marques de clients sont-elles prévues ?", 1],
+      ["F4", "Qu'est-ce qui distingue un produit vendu sous la marque d'un client de votre marque propre : la mousse, la housse, l'étiquette, le prix ?"],
+      ["F5", "Votre catalogue actuel contient-il des produits en double ou qui ne se vendent plus ?"],
+      ["F6", "Les prix de vente : un tarif unique, ou des prix par client ou type de client (grossiste, revendeur, particulier) ? Hors taxe ou toutes taxes comprises ? Remises habituelles ?"],
+      ["F7", "Les accessoires (dômes, sous-dômes, semelles, tapis, longuettes, flocons) : sont-ils vendus, à qui, et dans quelle unité (pièce, sac, kg) ?"],
+      ["F8", "Un client commande un article qui n'est pas en stock : faut-il bloquer la vente, ou la prendre et lancer la fabrication ? La règle est-elle la même pour tous les produits ?", 1],
+      ["F9", "Le parcours d'une vente aujourd'hui : devis, commande, bon de livraison, facture, paiement. Qui fait quoi ?"],
+      ["F10", "Émettez-vous plusieurs types de documents de vente (facture avec TVA, facture sans TVA, bon de livraison facturé) ? Avez-vous des clients assujettis à la TVA et d'autres non ?", 1],
+      ["F11", "Le bon de livraison sans prix : pour quels clients, et pourquoi ?"],
+      ["F12", "Livrez-vous vous-mêmes ? Avec quels véhicules ? Faut-il suivre les tournées ?"],
+      ["F13", "Moyens de paiement : espèces, chèque, virement, mobile money ? Ventes à crédit, avec quel délai ? Faut-il relancer les impayés ?"],
+      ["F14", "Souhaitez-vous un site vitrine, des devis en ligne ou un portail où vos clients suivent leurs commandes ?"]
+    ]},
+    { k: "G", id: "stock", t: "Stock et pilotage", q: [
+      ["G1", "Où est stocké quoi : matières, blocs en maturation, blocs prêts, produits finis, chutes ? Faut-il distinguer ces emplacements dans Odoo ?"],
+      ["G2", "Faites-vous des inventaires ? À quelle fréquence ?"],
+      ["G3", "Quelles alertes la direction veut-elle recevoir (rupture, gros écart d'inventaire, vente sous le prix, impayé) ? Par courriel, dans Odoo, par message ?"],
+      ["G4", "Quels chiffres voulez-vous suivre chaque semaine ou chaque mois : ventes par gamme, rendement des blocs, marge, stock ?"],
+      ["G5", "Qui doit pouvoir modifier les nomenclatures, c'est-à-dire la composition des produits ?"]
+    ]},
+    { k: "H", id: "reprise", t: "Données à reprendre", q: [
+      ["H1", "Clients et fournisseurs : combien, et où sont-ils listés aujourd'hui ?"],
+      ["H2", "Stock de départ : un inventaire complet est-il possible à la date de démarrage ?"],
+      ["H3", "Factures clients non payées et dettes fournisseurs à la date de démarrage : qui peut en fournir la liste ?"]
+    ]},
+    { k: "I", id: "suite", t: "Coupe optimisée et autres besoins", q: [
+      ["I1", "Utilisez-vous un logiciel d'optimisation de coupe (MousseCut ou un autre) ? Qui s'en sert ?"],
+      ["I2", "Souhaitez-vous qu'il soit relié à Odoo, les coupes étant alors enregistrées automatiquement ?"],
+      ["I3", "La paie fait l'objet d'une offre séparée. Souhaitez-vous qu'elle soit étudiée ?"],
+      ["I4", "D'autres besoins : qualité, maintenance des machines, ressources humaines ?"]
+    ]},
+    { k: "K", id: "comptable", t: "Annexe : pour le comptable", annexe: true,
+      intro: "Ces questions conditionnent le plan comptable, les taxes et la valorisation des stocks dans Odoo.", q: [
+      ["K1", "Régime fiscal : réel (avec TVA) ou impôt synthétique ? Assujetti à la TVA depuis quand ?"],
+      ["K2", "Que recouvrent les différents types de documents de vente du point de vue comptable ?"],
+      ["K3", "Date d'ouverture souhaitée de la comptabilité dans Odoo, et date de clôture de l'exercice."],
+      ["K4", "Plan comptable : le PCG 2005 malgache convient-il ? Y a-t-il des comptes ou des journaux propres à reprendre ?"],
+      ["K5", "Stocks : inventaire permanent (écritures à chaque mouvement) ou intermittent (écritures à l'inventaire) ? Méthode de valorisation : coût moyen pondéré ?"],
+      ["K6", "Le coût des chutes de coupe et des croûtes : perte de l'exercice, ou réparti sur les produits finis ? Les flocons vendus ont-ils une valeur de stock ?"],
+      ["K7", "Achats en devises : quel taux retenir (taux du jour, taux de la douane) ? Comment traiter les écarts de change ?"],
+      ["K8", "Soldes d'ouverture : balance, créances clients, dettes fournisseurs, stock valorisé. Qui les fournit, et à quelle date ?"],
+      ["K9", "Déclarations attendues d'Odoo : TVA, état des ventes, autres ?"]
+    ]}
+  ];
+  var ENTETE = ["entreprise", "date", "participants", "enqueteur"];
+  var DIMS = ["brut-L", "brut-l", "brut-H", "net-L", "net-l", "net-H"];
+  var TOTAL = 0;
+  SECTIONS.forEach(function (s) { TOTAL += s.q.length; });
+
+  /* --- stockage : peut être refusé (navigation privée) ; la page marche quand même --- */
+  var stockageOk = true;
+  function lire() { try { return JSON.parse(localStorage.getItem(CLE) || "null"); } catch (e) { stockageOk = false; return null; } }
+  function ecrire(d) { try { localStorage.setItem(CLE, JSON.stringify(d)); return true; } catch (e) { return false; } }
+  function vide() { return { format: FORMAT, version: VERSION, entete: {}, blocs: {}, reponses: {}, majLe: null, exporteLe: null }; }
+  var donnees = lire() || vide();
+  donnees.entete = donnees.entete || {}; donnees.blocs = donnees.blocs || {}; donnees.reponses = donnees.reponses || {};
+  try { localStorage.setItem(CLE + "-test", "1"); localStorage.removeItem(CLE + "-test"); } catch (e) { stockageOk = false; }
+  if (!stockageOk) { document.getElementById("sansstockage").hidden = false; }
+
+  function el(tag, attrs, enfants) {
+    var e = document.createElement(tag);
+    if (attrs) { Object.keys(attrs).forEach(function (k) {
+      if (k === "text") { e.textContent = attrs[k]; } else if (k === "html") { e.innerHTML = attrs[k]; } else { e.setAttribute(k, attrs[k]); }
+    }); }
+    (enfants || []).forEach(function (c) { if (c) { e.appendChild(c); } });
+    return e;
+  }
+
+  /* --- construction --- */
+  var conteneur = document.getElementById("questionnaire");
+  var sommaire = document.getElementById("sommaire");
+  SECTIONS.forEach(function (s) {
+    var sec = el("section", { "class": "section" + (s.annexe ? " annex" : ""), id: s.id, "aria-labelledby": "h-" + s.id });
+    var compteSec = el("span", { "class": "n", id: "n-" + s.id });
+    sec.appendChild(el("div", { "class": "section-title" }, [
+      el("span", { "class": "letter", "aria-hidden": "true", text: s.k }),
+      el("h2", { id: "h-" + s.id, text: s.t }), compteSec
+    ]));
+    if (s.intro) { sec.appendChild(el("p", { "class": "intro", text: s.intro })); }
+    if (s.bloc) { sec.appendChild(construireBloc()); }
+    s.q.forEach(function (q) {
+      var code = q[0];
+      var zone = el("textarea", { id: "r-" + code, "aria-labelledby": "t-" + code, rows: "3" });
+      var na = el("input", { type: "checkbox", id: "na-" + code });
+      var corps = el("div", { "class": "body" }, [
+        el("p", { "class": "text", id: "t-" + code, html: (q[2] ? '<span class="badge">Essentiel</span> ' : "") + echapper(q[1]) }),
+        q[3] ? el("p", { "class": "hint", text: q[3] }) : null,
+        zone,
+        el("label", { "class": "na", "for": "na-" + code }, [na, document.createTextNode("Ne nous concerne pas")])
+      ]);
+      var item = el("div", { "class": "q", id: "q-" + code, "data-ess": q[2] ? "1" : "0" }, [el("span", { "class": "code", text: code }), corps]);
+      sec.appendChild(item);
+    });
+    conteneur.appendChild(sec);
+    sommaire.appendChild(el("li", null, [el("a", { href: "#" + s.id }, [
+      el("span", { "class": "k", text: s.k }), el("span", { "class": "t", text: s.t }), el("span", { "class": "n", id: "m-" + s.id })
+    ])]));
+  });
+
+  function construireBloc() {
+    var svg = '<svg viewBox="0 0 220 170" role="img" aria-label="Bloc de mousse : longueur, largeur, hauteur">' +
+      '<polygon class="f3" points="30,60 150,60 190,30 70,30"/><polygon class="f2" points="150,60 190,30 190,120 150,150"/>' +
+      '<polygon class="f1" points="30,60 150,60 150,150 30,150"/><polyline class="e" points="30,60 150,60 150,150 30,150 30,60"/>' +
+      '<polyline class="e" points="30,60 70,30 190,30 150,60"/><polyline class="e" points="190,30 190,120 150,150"/>' +
+      '<text x="62" y="166">Longueur L</text><text x="168" y="152" transform="rotate(-37 168 152)">Largeur l</text>' +
+      '<text x="4" y="110" transform="rotate(-90 14 105)">Hauteur H</text></svg>';
+    var fig = el("div", { "class": "block card" });
+    fig.appendChild(el("div", { html: svg }));
+    var droite = el("div", { style: "display:grid;gap:10px;min-width:0" });
+    var grille = el("div", { "class": "dims" });
+    ["", "L (cm)", "l (cm)", "H (cm)"].forEach(function (t) { grille.appendChild(el("span", { "class": "h", text: t })); });
+    [["brut", "Bloc brut"], ["net", "Bloc net"]].forEach(function (b) {
+      grille.appendChild(el("span", { "class": "lbl", text: b[1] }));
+      ["L", "l", "H"].forEach(function (d) {
+        grille.appendChild(el("input", { type: "number", inputmode: "decimal", min: "0", step: "0.5", id: b[0] + "-" + d, "aria-label": b[1] + " " + d + " en cm" }));
+      });
+    });
+    droite.appendChild(grille);
+    droite.appendChild(el("p", { "class": "vol", id: "volumes", text: "Saisissez les dimensions pour obtenir les volumes." }));
+    droite.appendChild(el("p", { "class": "hint", style: "font-size:14px;color:var(--muted)", text: "Le brut sort du moussage ; le net reste après écroûtage." }));
+    fig.appendChild(droite);
+    return fig;
+  }
+
+  function echapper(t) { return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function nombre(id) { var v = parseFloat(String(donnees.blocs[id] || "").replace(",", ".")); return isFinite(v) && v > 0 ? v : null; }
+  function litres(p) { var a = nombre(p + "-L"), b = nombre(p + "-l"), c = nombre(p + "-H"); return a && b && c ? a * b * c / 1000 : null; }
+  function fmt(n, dec) { return n.toLocaleString("fr-FR", { minimumFractionDigits: dec || 0, maximumFractionDigits: dec || 0 }); }
+  function texteVolumes() {
+    var vb = litres("brut"), vn = litres("net"), parts = [];
+    if (vb) { parts.push("brut " + fmt(vb) + " L"); }
+    if (vn) { parts.push("net " + fmt(vn) + " L"); }
+    if (vb && vn && vn <= vb) { parts.push("perte à l'écroûtage " + fmt(100 * (1 - vn / vb), 1) + " %"); }
+    return parts.length ? "Volumes : " + parts.join(" · ") : "";
+  }
+
+  /* --- remplissage depuis la sauvegarde --- */
+  function remplir() {
+    ENTETE.forEach(function (id) { document.getElementById(id).value = donnees.entete[id] || ""; });
+    if (!donnees.entete.date) { donnees.entete.date = new Date().toISOString().slice(0, 10); }
+    document.getElementById("date").value = donnees.entete.date;
+    DIMS.forEach(function (id) { document.getElementById(id).value = donnees.blocs[id] || ""; });
+    SECTIONS.forEach(function (s) { s.q.forEach(function (q) {
+      var r = donnees.reponses[q[0]] || {};
+      var z = document.getElementById("r-" + q[0]);
+      z.value = r.texte || ""; document.getElementById("na-" + q[0]).checked = !!r.na; z.disabled = !!r.na;
+      ajuster(z);
+    }); });
+    toutCompter(); majApercu(); majExport();
+  }
+
+  function ajuster(z) { z.style.height = "auto"; z.style.height = Math.max(76, z.scrollHeight + 2) + "px"; }
+  function estFaite(code) { var r = donnees.reponses[code]; return !!(r && (r.na || (r.texte && r.texte.trim()))); }
+  function toutCompter() {
+    var total = 0;
+    SECTIONS.forEach(function (s) {
+      var n = 0;
+      s.q.forEach(function (q) { var f = estFaite(q[0]); if (f) { n++; } document.getElementById("q-" + q[0]).classList.toggle("done", f); });
+      total += n;
+      var t = n + "/" + s.q.length;
+      document.getElementById("n-" + s.id).textContent = t; document.getElementById("m-" + s.id).textContent = t;
+    });
+    document.getElementById("compte").textContent = total + " réponse" + (total > 1 ? "s" : "") + " sur " + TOTAL;
+    document.getElementById("jauge").style.width = Math.round(100 * total / TOTAL) + "%";
+    var v = document.getElementById("volumes"); var tv = texteVolumes();
+    if (v) { v.textContent = tv || "Saisissez les dimensions pour obtenir les volumes."; }
+    filtrer();
+  }
+
+  var etat = document.getElementById("etat");
+  function heure(iso) { var d = new Date(iso); return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }); }
+  var minuterie = null;
+  function enregistrer() {
+    donnees.majLe = new Date().toISOString();
+    var ok = ecrire(donnees);
+    etat.classList.toggle("err", !ok);
+    etat.textContent = ok ? "Enregistré à " + heure(donnees.majLe) : "Non enregistré : exportez avant de fermer";
+    toutCompter();
+    clearTimeout(minuterie); minuterie = setTimeout(majApercu, 400);
+  }
+  if (donnees.majLe) { etat.textContent = "Repris · dernier enregistrement " + new Date(donnees.majLe).toLocaleString("fr-FR"); }
+
+  document.addEventListener("input", function (ev) {
+    var c = ev.target, id = c.id;
+    if (ENTETE.indexOf(id) >= 0) { donnees.entete[id] = c.value; }
+    else if (DIMS.indexOf(id) >= 0) { donnees.blocs[id] = c.value; }
+    else if (id.indexOf("r-") === 0) { var code = id.slice(2); donnees.reponses[code] = donnees.reponses[code] || {}; donnees.reponses[code].texte = c.value; ajuster(c); }
+    else if (id.indexOf("na-") === 0) {
+      var cd = id.slice(3); donnees.reponses[cd] = donnees.reponses[cd] || {}; donnees.reponses[cd].na = c.checked;
+      document.getElementById("r-" + cd).disabled = c.checked;
+    }
+    else { return; }
+    enregistrer();
+  });
+  document.addEventListener("change", function (ev) {
+    if (ev.target.name === "filtre") { filtrer(); }
+  });
+  window.addEventListener("resize", function () { document.querySelectorAll(".q textarea").forEach(ajuster); });
+
+  function filtrer() {
+    var f = (document.querySelector('input[name="filtre"]:checked') || {}).value || "toutes";
+    SECTIONS.forEach(function (s) {
+      var visibles = 0;
+      s.q.forEach(function (q) {
+        var item = document.getElementById("q-" + q[0]);
+        var cache = (f === "essentielles" && item.getAttribute("data-ess") !== "1") || (f === "ouvertes" && estFaite(q[0]) && document.activeElement !== document.getElementById("r-" + q[0]));
+        item.hidden = cache; if (!cache) { visibles++; }
+      });
+      document.getElementById(s.id).hidden = visibles === 0;
+    });
+  }
+
+  /* --- export --- */
+  function texteExport() {
+    var e = donnees.entete, L = [];
+    L.push("# Entretien de cadrage : " + (e.entreprise || "entreprise non renseignée"), "");
+    L.push("- Date : " + (e.date || "-"));
+    L.push("- Participants : " + (e.participants || "-"));
+    L.push("- Mené par : " + (e.enqueteur || "-"));
+    var faites = 0, na = 0;
+    SECTIONS.forEach(function (s) { s.q.forEach(function (q) { var r = donnees.reponses[q[0]]; if (r && r.na) { na++; } else if (estFaite(q[0])) { faites++; } }); });
+    L.push("- Réponses : " + faites + " sur " + TOTAL + (na ? ", " + na + " non concernée" + (na > 1 ? "s" : "") : ""));
+    L.push("- Exporté le " + new Date().toLocaleString("fr-FR"), "");
+    L.push("## Dimensions du bloc", "", "| | Longueur (cm) | Largeur (cm) | Hauteur (cm) |", "|---|---|---|---|");
+    [["brut", "Bloc brut"], ["net", "Bloc net"]].forEach(function (b) {
+      L.push("| " + b[1] + " | " + ["L", "l", "H"].map(function (d) { return donnees.blocs[b[0] + "-" + d] || "-"; }).join(" | ") + " |");
+    });
+    var tv = texteVolumes(); L.push(""); if (tv) { L.push(tv, ""); }
+    SECTIONS.forEach(function (s) {
+      L.push("## " + s.k + ". " + s.t, "");
+      s.q.forEach(function (q) {
+        var r = donnees.reponses[q[0]] || {};
+        L.push("**" + q[0] + ".** " + q[1] + (q[2] ? " *(essentiel)*" : ""), "");
+        if (r.na) { L.push("> Ne nous concerne pas."); }
+        else if (r.texte && r.texte.trim()) { r.texte.trim().split(/\r?\n/).forEach(function (l) { L.push("> " + l); }); }
+        else { L.push("> (pas de réponse)"); }
+        L.push("");
+      });
+    });
+    return L.join("\n");
+  }
+  function base() {
+    var n = (donnees.entete.entreprise || "entretien").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return "entretien-" + (n || "usine") + "-" + (donnees.entete.date || new Date().toISOString().slice(0, 10));
+  }
+  var message = document.getElementById("message");
+  function dire(t, err) { message.textContent = t; message.classList.toggle("err", !!err); }
+  function telecharger(contenu, nom, type) {
+    // Marque UTF-8 en tête : sans elle, des lecteurs Windows affichent mal les accents.
+    var blob = new Blob(["﻿" + contenu], { type: type });
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nom;
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function noterExport() {
+    donnees.exporteLe = new Date().toISOString(); ecrire(donnees); majExport();
+  }
+  function majExport() {
+    document.getElementById("dernier-export").textContent = donnees.exporteLe ?
+      "Dernier export depuis cet appareil : " + new Date(donnees.exporteLe).toLocaleString("fr-FR") + "." : "Aucun export depuis cet appareil.";
+  }
+  function majApercu() { document.getElementById("apercu").value = texteExport(); ajuster(document.getElementById("apercu")); }
+
+  document.getElementById("b-md").addEventListener("click", function () {
+    telecharger(texteExport(), base() + ".md", "text/markdown"); noterExport(); dire("Compte rendu téléchargé : " + base() + ".md");
+  });
+  document.getElementById("b-json").addEventListener("click", function () {
+    var copie = JSON.parse(JSON.stringify(donnees)); copie.format = FORMAT; copie.version = VERSION; copie.exporteLe = new Date().toISOString();
+    telecharger(JSON.stringify(copie, null, 2), base() + ".json", "application/json"); noterExport(); dire("Sauvegarde téléchargée : " + base() + ".json");
+  });
+  document.getElementById("b-copier").addEventListener("click", function () {
+    var t = texteExport(), zone = document.getElementById("apercu");
+    function repli() { zone.value = t; zone.focus(); zone.select(); dire("Texte sélectionné : faites Ctrl+C (ou Copier) pour le copier."); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function () { noterExport(); dire("Texte copié : collez-le dans un courriel ou un document."); }, repli);
+    } else { repli(); }
+  });
+  var bp = document.getElementById("b-partager");
+  if (navigator.share) {
+    bp.hidden = false;
+    bp.addEventListener("click", function () {
+      var t = texteExport(), envoi = { title: "Entretien de cadrage", text: t };
+      try {
+        // Type nu « text/plain » : le partage Android refuse « text/plain;charset=utf-8 ».
+        var f = new File(["﻿" + t], base() + ".md", { type: "text/plain" });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) { envoi = { title: "Entretien de cadrage", files: [f] }; }
+      } catch (e) {}
+      navigator.share(envoi).then(function () { noterExport(); dire("Partagé."); }, function () { dire("Partage annulé. Utilisez « Télécharger le compte rendu » ou « Copier le texte ».", true); });
+    });
+  }
+  document.getElementById("b-imprimer").addEventListener("click", function () { window.print(); });
+
+  document.getElementById("f-import").addEventListener("change", function (ev) {
+    var f = ev.target.files && ev.target.files[0]; if (!f) { return; }
+    var lecteur = new FileReader();
+    lecteur.onload = function () {
+      var d;
+      try { d = JSON.parse(String(lecteur.result).replace(/^﻿/, "")); } catch (e) { dire("Ce fichier n'est pas une sauvegarde lisible.", true); return; }
+      if (!d || d.format !== FORMAT) { dire("Ce fichier n'est pas une sauvegarde de ce questionnaire.", true); return; }
+      var avant = Object.keys(donnees.reponses).filter(estFaite).length;
+      if (avant && !window.confirm("Remplacer les " + avant + " réponses de cet appareil par celles de la sauvegarde « " + (d.entete && d.entete.entreprise || "sans nom") + " » ?")) { dire("Reprise annulée."); return; }
+      donnees = vide(); donnees.entete = d.entete || {}; donnees.blocs = d.blocs || {}; donnees.reponses = d.reponses || {};
+      donnees.majLe = new Date().toISOString(); donnees.exporteLe = d.exporteLe || null;
+      ecrire(donnees); remplir(); dire("Sauvegarde reprise : " + Object.keys(donnees.reponses).filter(estFaite).length + " réponses.");
+    };
+    lecteur.readAsText(f, "utf-8"); ev.target.value = "";
+  });
+
+  document.getElementById("b-effacer").addEventListener("click", function () {
+    var n = Object.keys(donnees.reponses).filter(estFaite).length;
+    var avert = n ? "Effacer les " + n + " réponses de cet appareil pour commencer un nouvel entretien ?" + (donnees.exporteLe ? "" : "\n\nAttention : elles n'ont jamais été exportées.") : "Commencer un nouvel entretien ?";
+    if (!window.confirm(avert)) { return; }
+    donnees = vide(); ecrire(donnees); remplir(); etat.textContent = "Nouvel entretien"; dire("Réponses effacées.");
+    window.scrollTo(0, 0);
+  });
+
+  remplir();
+})();
+</script>
+</body>
+</html>
